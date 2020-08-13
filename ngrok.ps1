@@ -25,25 +25,41 @@ function Send-NgrokUrlPort{
     [Parameter()]
     [string]$Url
 )
-    $msgbody = '{"type":"message",
-   "attachments":[
-      {
-         "contentType":"application/vnd.microsoft.card.adaptive",
-         "contentUrl":null,
-         "content":{
-            "$schema":"http://adaptivecards.io/schemas/adaptive-card.json",
-            "type":"AdaptiveCard",
-            "version":"1.2",
-            "body":[
-               {
-                "ngrok url" : $Port
-               }
-            ]
-         }
-      }
-   ]
-}'
-    Invoke-RestMethod -Method post -ContentType 'Application/Json' -Body '{"@context": "http://schema.org/extensions","@type": "MessageCard", "text": "$Url"}' -Uri "https://outlook.office.com/webhook/b5f3ab75-4050-4d4c-9642-8ea60bfb1fa1@0fed03a3-402d-4633-a8cd-8b308822253e/IncomingWebhook/c667c24a3e7848bfab73abda4a811efd/9f733cad-f2cd-4a31-a88c-18ec153a4484"
+    $msgbody = [PSCustomObject]@{
+        "@context"= "http://schema.org/extensions";
+        "@type"= "MessageCard";
+        "themeColor"= "0076D7";
+        "summary"= "ngrok";
+        "sections"= @(@{
+            "activityTitle"= "![TestImage](https://47a92947.ngrok.io/Content/Images/default.png)ngrok port started...";
+            "activitySubtitle"="$Url";
+            "markdown"= $true
+        })
+        } | ConvertTo-Json
+
+    #"{`"@context`": `"http://schema.org/extensions`",`"@type`": `"MessageCard`", `"text`": `"$Url`" }"z
+    
+
+    Write-Host $msgbody
+#      '{"type":"message",
+#    "attachments":[
+#       {
+#          "contentType":"application/vnd.microsoft.card.adaptive",
+#          "contentUrl":null,
+#          "content":{
+#             "$schema":"http://adaptivecards.io/schemas/adaptive-card.json",
+#             "type":"AdaptiveCard",
+#             "version":"1.2",
+#             "body":[
+#                {
+#                 "ngrok url" : $Port
+#                }
+#             ]
+#          }
+#       }
+#    ]
+# }'
+    Invoke-RestMethod -Method post -ContentType 'Application/Json' -Body $msgbody -Uri "https://outlook.office.com/webhook/b5f3ab75-4050-4d4c-9642-8ea60bfb1fa1@0fed03a3-402d-4633-a8cd-8b308822253e/IncomingWebhook/c667c24a3e7848bfab73abda4a811efd/9f733cad-f2cd-4a31-a88c-18ec153a4484"
 }
 
 

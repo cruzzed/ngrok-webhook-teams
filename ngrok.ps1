@@ -10,12 +10,9 @@ param(
 function Get-NgrokUrlPort{
     try {
         $content = (Invoke-WebRequest http://127.0.0.1:4040/api/tunnels).Content | ConvertFrom-Json
-        Write-Host "$content.tunnels"
-        Write-Host "not catched"
         return ($content).tunnels
     }
     catch {
-        #Write-Host "$_"
         return $false
     }
 }
@@ -36,29 +33,7 @@ function Send-NgrokUrlPort{
             "markdown"= $true
         })
         } | ConvertTo-Json
-
-    #"{`"@context`": `"http://schema.org/extensions`",`"@type`": `"MessageCard`", `"text`": `"$Url`" }"z
-    
-
-    Write-Host $msgbody
-#      '{"type":"message",
-#    "attachments":[
-#       {
-#          "contentType":"application/vnd.microsoft.card.adaptive",
-#          "contentUrl":null,
-#          "content":{
-#             "$schema":"http://adaptivecards.io/schemas/adaptive-card.json",
-#             "type":"AdaptiveCard",
-#             "version":"1.2",
-#             "body":[
-#                {
-#                 "ngrok url" : $Port
-#                }
-#             ]
-#          }
-#       }
-#    ]
-# }'
+        
     Invoke-RestMethod -Method post -ContentType 'Application/Json' -Body $msgbody -Uri ""
 }
 
@@ -66,10 +41,8 @@ function Send-NgrokUrlPort{
 
 while($true){
     $ngrokPort = Get-NgrokUrlPort
-    Write-Host "bruh"
-    Write-Host "$ngrokPort"
     if($ngrokPort -eq $false){
-        Write-Host "Ha"
+        Write-Host "Ngrok is disconnected... Restarting..."
         $ngrokProc = Get-Process ngrok -ErrorAction SilentlyContinue
         if($ngrokProc -eq $true){
             $ngrokProc.CloseMainWindow()
@@ -78,22 +51,19 @@ while($true){
             if (!$ngrokProc.HasExited) {
                 $ngrokProc | Stop-Process -Force
             }
-            Write-Host "Hmah"
+            Write-Host "Starting ngrok..."
             Start-Process -FilePath ".\ngrok.exe" -ArgumentList $Protocol, $Port, "-region ap" -WindowStyle minimized
         }else{
-            Write-Host "test"
+            Write-Host "Starting ngrok..."
             Start-Process -FilePath ".\ngrok.exe" -ArgumentList $Protocol, $Port, "-region ap" -WindowStyle minimized
         }
     }
-    Write-Host (Get-NgrokUrlPort).public_url
-    Write-Host $ngrokPort.public_url
+    
     if(!((Get-NgrokUrlPort).public_url -eq $ngrokPort.public_url)){
-        Write-Host "not same"
+        Write-Host "ngrok port updated... Sending new port..."
         Start-Sleep -Seconds 5
         $ngrokPort = Get-NgrokUrlPort
         Send-NgrokUrlPort -Url $ngrokPort.public_url
     }
-
-    Write-Host "meh"
     Start-Sleep -Seconds 60
 }
